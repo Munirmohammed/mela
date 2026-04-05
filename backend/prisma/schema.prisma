@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  phone        String    @unique
+  role         Role      @default(SHOP_OWNER)
+  isActive     Boolean   @default(true)
+  refreshToken String?
+  shop         Shop?
+  driver       Driver?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Shop {
+  id            String         @id @default(cuid())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String         @unique
+  ownerName     String
+  shopName      String
+  phone         String         @unique
+  zone          Zone
+  address       String
+  lat           Float?
+  lng           Float?
+  isVerified    Boolean        @default(false)
+  creditScore   Float          @default(0)
+  creditLimit   Float          @default(0)
+  orders        Order[]
+  loans         Loan[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String
+  nameAm         String
+  description    String?
+  category       Category
+  unit           String
+  wholesalePrice Float
+  retailPrice    Float
+  minOrderQty    Int         @default(1)
+  imageUrl       String?
+  isAvailable    Boolean     @default(true)
+  orderItems     OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Order {
+  id            String         @id @default(cuid())
+  shop          Shop           @relation(fields: [shopId], references: [id])
+  shopId        String
+  status        OrderStatus    @default(PENDING)
+  items         OrderItem[]
+  totalAmount   Float
+  deliveryFee   Float          @default(30)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus  @default(UNPAID)
+  chapaRef      String?
+  batch         DeliveryBatch? @relation(fields: [batchId], references: [id])
+  batchId       String?
+  scheduledFor  DateTime
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Float
+}
+
+model DeliveryBatch {
+  id          String      @id @default(cuid())
+  zone        Zone
+  status      BatchStatus @default(AGGREGATING)
+  orders      Order[]
+  driver      Driver?     @relation(fields: [driverId], references: [id])
+  driverId    String?
+  route       Json?
+  bulkList    Json?
+  totalOrders Int         @default(0)
+  scheduledAt DateTime
+  startedAt   DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Driver {
+  id        String          @id @default(cuid())
+  user      User            @relation(fields: [userId], references: [id])
+  userId    String          @unique
+  name      String
+  phone     String          @unique
+  vehicle   String
+  plateNo   String
+  isActive  Boolean         @default(true)
+  batches   DeliveryBatch[]
+  createdAt DateTime        @default(now())
+}
+
+model Loan {
+  id        String     @id @default(cuid())
+  shop      Shop       @relation(fields: [shopId], references: [id])
+  shopId    String
+  amount    Float
+  fee       Float
+  status    LoanStatus @default(ACTIVE)
+  dueDate   DateTime
+  repaidAt  DateTime?
+  createdAt DateTime   @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  entity    String
+  entityId  String
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+enum Role          { SHOP_OWNER DRIVER ADMIN }
+enum Zone          { BOLE KIRKOS YEKA ARADA LIDETA NIFAS_SILK }
+enum Category      { GRAINS OILS_FATS CLEANING BEVERAGES DAIRY SNACKS SPICES OTHER }
+enum OrderStatus   { PENDING CONFIRMED IN_TRANSIT DELIVERED CANCELLED }
+enum BatchStatus   { AGGREGATING PURCHASING IN_TRANSIT DELIVERED }
+enum PaymentMethod { CASH CHAPA CREDIT }
+enum PaymentStatus { UNPAID PAID }
+enum LoanStatus    { ACTIVE REPAID DEFAULTED }
