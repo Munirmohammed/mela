@@ -486,6 +486,78 @@ CLOUDINARY_URL=
 
 ---
 
+## Additional Models (Missing from V1)
+
+```prisma
+model Supplier {
+  id       String    @id @default(cuid())
+  name     String
+  phone    String    @unique
+  location String    // e.g. "Merkato, Addis Ababa"
+  products Json      // product categories they supply
+  isActive Boolean   @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  shopId    String
+  type      String   // "ORDER_CONFIRMED" | "BATCH_DISPATCHED" | "DELIVERED" | "LOAN_APPROVED"
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String   // userId or "system"
+  action    String   // "ORDER_CANCELLED", "LOAN_APPROVED", etc.
+  entity    String   // "Order", "Loan", "Shop"
+  entityId  String
+  meta      Json?
+  createdAt DateTime @default(now())
+}
+```
+
+---
+
+## Cross-Cutting Concerns
+
+### Validation
+- All request bodies validated with **Zod** schemas
+- Validation middleware wraps every route handler
+- Errors return structured `{ field, message }` arrays
+
+### Logging
+- **Winston** for structured JSON logging
+- Log levels: error, warn, info, http, debug
+- HTTP request logging via **morgan** → Winston transport
+- Separate log files: `error.log`, `combined.log`
+
+### Error Handling
+- Global error middleware catches all thrown errors
+- Custom `AppError` class with `statusCode` + `isOperational`
+- Unhandled rejections + uncaught exceptions → log + graceful shutdown
+
+### API Versioning
+- All routes prefixed `/api/v1/`
+- Version header support: `Accept-Version: v1`
+
+### Security
+- **Helmet** — HTTP security headers
+- **cors** — whitelist frontend origin
+- **express-rate-limit** — 100 req/15min per IP, stricter on auth routes
+- **bcrypt** — hash any sensitive tokens stored in DB
+- Input sanitization against NoSQL injection
+
+### Seed Data
+- `prisma/seed.ts` — seeds 50 products across 6 categories
+- Categories: Grains, Oils & Fats, Cleaning, Beverages, Dairy, Snacks
+- Dev seed includes 3 test shops, 2 drivers, 1 admin
+
+---
+
 ## Why This Wins in Ethiopia
 
 1. Merkato is the largest open-air market in Africa — supply is there
