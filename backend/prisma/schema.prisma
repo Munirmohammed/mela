@@ -160,11 +160,60 @@ model OtpCode {
   @@index([phone])
 }
 
-enum Role          { SHOP_OWNER DRIVER ADMIN }
-enum Zone          { BOLE KIRKOS YEKA ARADA LIDETA NIFAS_SILK }
-enum Category      { GRAINS OILS_FATS CLEANING BEVERAGES DAIRY SNACKS SPICES OTHER }
-enum OrderStatus   { PENDING CONFIRMED IN_TRANSIT DELIVERED CANCELLED }
-enum BatchStatus   { AGGREGATING PURCHASING IN_TRANSIT DELIVERED }
-enum PaymentMethod { CASH CHAPA CREDIT }
-enum PaymentStatus { UNPAID PAID }
-enum LoanStatus    { ACTIVE REPAID DEFAULTED }
+enum Role {
+  SHOP_OWNER
+  DRIVER
+  ADMIN
+}
+
+enum Zone {
+  BOLE
+  KIRKOS
+  YEKA
+  ARADA
+  LIDETA
+  NIFAS_SILK
+}
+
+enum Category {
+  GRAINS
+  OILS_FATS
+  CLEANING
+  BEVERAGES
+  DAIRY
+  SNACKS
+  SPICES
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum BatchStatus {
+  AGGREGATING
+  PURCHASING
+  IN_TRANSIT
+  DELIVERED
+}
+
+enum PaymentMethod {
+  CASH
+  CHAPA
+  CREDIT
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+enum LoanStatus {
+  ACTIVE
+  REPAID
+  DEFAULTED
+}
