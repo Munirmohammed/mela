@@ -51,8 +51,10 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Logging
-app.use(morgan('combined', { stream: { write: (msg) => logger.http(msg.trim()) } }))
+// Logging — minimal format: METHOD /path HTTP/x.x STATUS size
+app.use(morgan(':method :url HTTP/:http-version :status :res[content-length]', {
+  stream: { write: (msg) => logger.http(msg.trim()) },
+}))
 
 // Health check
 app.get('/health', (_req, res) => {

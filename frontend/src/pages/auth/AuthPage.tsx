@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { toast } from '@/components/ui/Toast'
+import { getErrorMessage, getFieldErrors } from '@/lib/apiError'
 
 const ZONES = ['BOLE', 'KIRKOS', 'YEKA', 'ARADA', 'LIDETA', 'NIFAS_SILK']
 
@@ -16,25 +17,35 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const setTokens = useAuthStore((s) => s.setTokens)
 
-  const [step, setStep] = useState<Step>('phone')
+  const [step, setStep]   = useState<Step>('phone')
   const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [isNew, setIsNew] = useState(false)
-  const [form, setForm] = useState({ ownerName: '', shopName: '', zone: 'BOLE', address: '' })
+  const [otp, setOtp]     = useState('')
+  const [form, setForm]   = useState({ ownerName: '', shopName: '', zone: 'BOLE', address: '' })
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const clearFieldErrors = () => setFieldErrors({})
 
   const loginMutation = useMutation({
     mutationFn: () => authApi.login(phone),
-    onSuccess: () => { setIsNew(false); setStep('otp') },
+    onSuccess: () => { clearFieldErrors(); setStep('otp') },
     onError: (err: any) => {
-      if (err.response?.status === 404) { setIsNew(true); setStep('register') }
-      else toast.error(err.response?.data?.message || 'Something went wrong')
+      if (err.response?.status === 404) { clearFieldErrors(); setStep('register') }
+      else toast.error(getErrorMessage(err, 'Login failed'))
     },
   })
 
   const registerMutation = useMutation({
     mutationFn: () => authApi.register({ phone, ...form }),
-    onSuccess: () => { setStep('otp') },
-    onError: (err: any) => toast.error(err.response?.data?.message || 'Registration failed'),
+    onSuccess: () => { clearFieldErrors(); setStep('otp') },
+    onError: (err: any) => {
+      const fields = getFieldErrors(err)
+      if (Object.keys(fields).length) {
+        setFieldErrors(fields)
+        toast.error('Please fix the errors below')
+      } else {
+        toast.error(getErrorMessage(err, 'Registration failed'))
+      }
+    },
   })
 
   const verifyMutation = useMutation({
@@ -44,7 +55,7 @@ export default function AuthPage() {
       toast.success('Welcome to Mela!')
       navigate(data.data.role === 'ADMIN' ? '/admin' : '/')
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || 'Invalid OTP'),
+    onError: (err: any) => toast.error(getErrorMessage(err, 'Invalid OTP')),
   })
 
   return (
@@ -93,12 +104,22 @@ export default function AuthPage() {
               <h2 className="text-xl font-semibold text-white">Create your shop</h2>
               <p className="text-gray-500 text-sm mt-1">Tell us about your business</p>
             </div>
-            <Input label="Your Name" placeholder="Abebe Kebede" value={form.ownerName}
-              onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
-              icon={<Phone className="w-4 h-4" />} />
-            <Input label="Shop Name" placeholder="Abebe Mini Market" value={form.shopName}
-              onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-              icon={<Store className="w-4 h-4" />} />
+            <Input
+              label="Your Name"
+              placeholder="Abebe Kebede"
+              value={form.ownerName}
+              onChange={(e) => { setForm({ ...form, ownerName: e.target.value }); clearFieldErrors() }}
+              icon={<Phone className="w-4 h-4" />}
+              error={fieldErrors.ownerName}
+            />
+            <Input
+              label="Shop Name"
+              placeholder="Abebe Mini Market"
+              value={form.shopName}
+              onChange={(e) => { setForm({ ...form, shopName: e.target.value }); clearFieldErrors() }}
+              icon={<Store className="w-4 h-4" />}
+              error={fieldErrors.shopName}
+            />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-300">Zone / Area</label>
               <select
@@ -108,11 +129,22 @@ export default function AuthPage() {
               >
                 {ZONES.map((z) => <option key={z} value={z}>{z.replace('_', ' ')}</option>)}
               </select>
+              {fieldErrors.zone && <p className="text-xs text-red-400">{fieldErrors.zone}</p>}
             </div>
-            <Input label="Address" placeholder="Near Edna Mall, Bole Road" value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              icon={<MapPin className="w-4 h-4" />} />
-            <Button className="w-full" size="lg"
+            <Input
+              label="Address"
+              placeholder="Near Edna Mall, Bole Road"
+              value={form.address}
+              onChange={(e) => { setForm({ ...form, address: e.target.value }); clearFieldErrors() }}
+              icon={<MapPin className="w-4 h-4" />}
+              error={fieldErrors.address}
+            />
+            {fieldErrors.phone && (
+              <p className="text-xs text-red-400 text-center">{fieldErrors.phone}</p>
+            )}
+            <Button
+              className="w-full"
+              size="lg"
               loading={registerMutation.isPending}
               onClick={() => registerMutation.mutate()}
               disabled={!form.ownerName || !form.shopName || !form.address}
@@ -140,7 +172,9 @@ export default function AuthPage() {
               maxLength={6}
               className="text-center text-2xl tracking-[0.5em] font-mono"
             />
-            <Button className="w-full" size="lg"
+            <Button
+              className="w-full"
+              size="lg"
               loading={verifyMutation.isPending}
               onClick={() => verifyMutation.mutate()}
               disabled={otp.length !== 6}
