@@ -1,11 +1,30 @@
 {
   "name": "mela",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
+  "description": "Mela — the digital Merkato. B2B group-buying, delivery & embedded finance for Ethiopian kiosks.",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "turbo run dev",
+    "dev:api": "turbo run dev --filter=@mela/api",
+    "dev:web": "turbo run dev --filter=@mela/admin-web",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.4",
+    "typescript": "^5.3.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "ioredis": "5.11.0"
+    }
   }
 }

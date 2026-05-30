@@ -1,8 +1,44 @@
+# dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# builds
 dist/
+build/
+*.tsbuildinfo
+
+# turbo
+.turbo/
+
+# env & secrets
 .env
 .env.local
+.env.*.local
+
+# logs
 *.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# test coverage
+coverage/
+
+# editor / os
 .DS_Store
+.idea/
+
+# prisma local
 prisma/migrations/dev/
+
+# expo / react-native (future apps)
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# misc scratch
 *.py

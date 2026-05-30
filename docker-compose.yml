@@ -34,8 +34,8 @@ services:
 
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: mela-api
     restart: unless-stopped
     ports:
@@ -46,16 +46,41 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - ./backend/.env
+      - ./apps/api/.env
+    environment:
+      NODE_ENV: production
+      # The dedicated worker owns queue consumption + scheduling.
+      RUN_WORKERS_IN_API: 'false'
+      DATABASE_URL: postgresql://mela:secret@postgres:5432/meladb
+      REDIS_URL: redis://redis:6379
 
-  frontend:
+  worker:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: mela-frontend
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: mela-worker
+    restart: unless-stopped
+    command: ['node', 'dist/worker.js']
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./apps/api/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://mela:secret@postgres:5432/meladb
+      REDIS_URL: redis://redis:6379
+
+  admin-web:
+    build:
+      context: .
+      dockerfile: apps/admin-web/Dockerfile
+    container_name: mela-admin-web
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '8080:80'
     depends_on:
       - api
 
