@@ -11,6 +11,8 @@ import { setupScheduler } from './jobs/scheduler'
 // Importing a job module registers its BullMQ worker.
 import './jobs/aggregation.job'
 import './jobs/notification.job'
+import './jobs/payment-retry.job'
+import { startOutboxProcessor } from './outbox/outbox.worker'
 
 /**
  * Dedicated worker process. Runs the BullMQ workers and the cron scheduler
@@ -22,6 +24,7 @@ async function bootstrap() {
   try {
     await prisma.$connect()
     await setupScheduler()
+    startOutboxProcessor()
     logger.info('🛠️  Mela worker started — consuming queues + scheduler active')
   } catch (err: any) {
     logger.error('Worker failed to start', { err: err.message })

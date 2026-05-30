@@ -26,6 +26,9 @@ async function bootstrap() {
       // Importing a job module registers its BullMQ worker.
       await import('./jobs/aggregation.job')
       await import('./jobs/notification.job')
+      await import('./jobs/payment-retry.job')
+      const { startOutboxProcessor } = await import('./outbox/outbox.worker')
+      startOutboxProcessor()
       await setupScheduler()
       logger.info('🛠️  In-process workers + scheduler registered')
     } else {

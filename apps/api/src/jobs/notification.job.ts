@@ -59,6 +59,41 @@ export const notificationWorker = new Worker(
         )
         break
       }
+
+      case 'order-paid': {
+        const shop = await prisma.shop.findUnique({ where: { id: data.shopId } })
+        if (shop) {
+          await smsService.send(
+            shop.phone,
+            `Mela: Payment received for order ${String(data.orderId).slice(-6)} — ${data.amount} ETB. Thank you!`
+          )
+          await prisma.notification.create({
+            data: {
+              shopId: shop.id,
+              type: 'PAYMENT_RECEIVED',
+              title: 'Payment received',
+              message: `We received ${data.amount} ETB for your order.`,
+            },
+          })
+        }
+        break
+      }
+
+      case 'wallet-topup': {
+        const shop = await prisma.shop.findUnique({ where: { id: data.shopId } })
+        if (shop) {
+          await smsService.send(shop.phone, `Mela: Wallet topped up with ${data.amount} ETB.`)
+          await prisma.notification.create({
+            data: {
+              shopId: shop.id,
+              type: 'WALLET_TOPUP',
+              title: 'Wallet topped up',
+              message: `${data.amount} ETB added to your wallet.`,
+            },
+          })
+        }
+        break
+      }
     }
   },
   { connection: redis }

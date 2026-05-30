@@ -15,6 +15,7 @@ import productsRoutes from './modules/products/products.routes'
 import ordersRoutes from './modules/orders/orders.routes'
 import creditRoutes from './modules/credit/credit.routes'
 import adminRoutes from './modules/admin/admin.routes'
+import paymentsRoutes from './modules/payments/payments.routes'
 
 const app = express()
 const httpServer = createServer(app)
@@ -47,8 +48,15 @@ app.use(cors({ origin: env.FRONTEND_URL, credentials: true }))
 // Rate limiting
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }))
 
-// Parsing
-app.use(express.json({ limit: '10mb' }))
+// Parsing — capture the raw body so payment webhooks can verify signatures.
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req, _res, buf) => {
+      ;(req as unknown as { rawBody?: Buffer }).rawBody = buf
+    },
+  })
+)
 app.use(express.urlencoded({ extended: true }))
 
 // Logging — minimal format: METHOD /path HTTP/x.x STATUS size
@@ -67,6 +75,7 @@ app.use('/api/v1/products', productsRoutes)
 app.use('/api/v1/orders', ordersRoutes)
 app.use('/api/v1/credit', creditRoutes)
 app.use('/api/v1/admin', adminRoutes)
+app.use('/api/v1/payments', paymentsRoutes)
 
 // 404
 app.use((_req, res) => {

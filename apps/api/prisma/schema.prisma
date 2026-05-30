@@ -36,6 +36,8 @@ model Shop {
   orders        Order[]
   loans         Loan[]
   notifications Notification[]
+  payments      Payment[]
+  wallet        Wallet?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -72,6 +74,7 @@ model Order {
   batchId       String?
   scheduledFor  DateTime
   notes         String?
+  payments      Payment[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -216,4 +219,97 @@ enum LoanStatus {
   ACTIVE
   REPAID
   DEFAULTED
+}
+
+enum PaymentTxStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentPurpose {
+  ORDER
+  WALLET_TOPUP
+  LOAN_REPAYMENT
+}
+
+enum WalletTxType {
+  CREDIT
+  DEBIT
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+/// A single payment attempt against an order, wallet top-up, or loan repayment.
+/// Separate from Order so retries and provider webhooks are first-class and idempotent.
+model Payment {
+  id             String          @id @default(cuid())
+  shop           Shop            @relation(fields: [shopId], references: [id])
+  shopId         String
+  order          Order?          @relation(fields: [orderId], references: [id])
+  orderId        String?
+  amount         Float
+  currency       String          @default("ETB")
+  method         PaymentMethod
+  provider       String          @default("CHAPA")
+  purpose        PaymentPurpose  @default(ORDER)
+  status         PaymentTxStatus @default(PENDING)
+  providerRef    String? // Chapa tx_ref / reference
+  idempotencyKey String          @unique
+  meta           Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([shopId])
+  @@index([orderId])
+  @@index([status])
+}
+
+/// Per-shop wallet. `balance` is a cached running total; the source of truth is
+/// the sum of WalletTransaction rows (asserted in tests).
+model Wallet {
+  id           String              @id @default(cuid())
+  shop         Shop                @relation(fields: [shopId], references: [id])
+  shopId       String              @unique
+  balance      Float               @default(0)
+  currency     String              @default("ETB")
+  transactions WalletTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model WalletTransaction {
+  id           String       @id @default(cuid())
+  wallet       Wallet       @relation(fields: [walletId], references: [id])
+  walletId     String
+  type         WalletTxType
+  amount       Float
+  balanceAfter Float
+  reason       String
+  refType      String? // e.g. "ORDER", "PAYMENT", "REFUND"
+  refId        String?
+  meta         Json?
+  createdAt    DateTime     @default(now())
+
+  @@index([walletId])
+}
+
+/// Transactional outbox: domain events written in the same DB transaction as the
+/// state change, then delivered asynchronously by the outbox worker (at-least-once).
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  type        String
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  attempts    Int          @default(0)
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@index([status])
 }
