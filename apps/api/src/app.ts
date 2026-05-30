@@ -4,11 +4,11 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
-import { Server as SocketServer } from 'socket.io'
 
 import { env } from './config/env'
 import { logger } from './utils/logger'
 import { errorMiddleware } from './middleware/error.middleware'
+import { initRealtime } from './realtime/socket'
 
 import authRoutes from './modules/auth/auth.routes'
 import productsRoutes from './modules/products/products.routes'
@@ -16,30 +16,13 @@ import ordersRoutes from './modules/orders/orders.routes'
 import creditRoutes from './modules/credit/credit.routes'
 import adminRoutes from './modules/admin/admin.routes'
 import paymentsRoutes from './modules/payments/payments.routes'
+import deliveryRoutes from './modules/delivery/delivery.routes'
 
 const app = express()
 const httpServer = createServer(app)
 
-// Socket.io for live tracking
-export const io = new SocketServer(httpServer, {
-  cors: { origin: env.FRONTEND_URL, credentials: true },
-})
-
-io.on('connection', (socket) => {
-  logger.debug(`Socket connected: ${socket.id}`)
-
-  socket.on('join-order', (orderId: string) => {
-    socket.join(`order:${orderId}`)
-  })
-
-  socket.on('driver-location', (data: { batchId: string; lat: number; lng: number }) => {
-    io.to(`batch:${data.batchId}`).emit('location-update', { lat: data.lat, lng: data.lng })
-  })
-
-  socket.on('disconnect', () => {
-    logger.debug(`Socket disconnected: ${socket.id}`)
-  })
-})
+// Socket.io for live delivery tracking (Redis-adapter backed — scales across replicas).
+export const io = initRealtime(httpServer)
 
 // Security
 app.use(helmet())
@@ -76,6 +59,7 @@ app.use('/api/v1/orders', ordersRoutes)
 app.use('/api/v1/credit', creditRoutes)
 app.use('/api/v1/admin', adminRoutes)
 app.use('/api/v1/payments', paymentsRoutes)
+app.use('/api/v1/delivery', deliveryRoutes)
 
 // 404
 app.use((_req, res) => {

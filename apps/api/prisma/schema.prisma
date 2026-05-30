@@ -75,6 +75,7 @@ model Order {
   scheduledFor  DateTime
   notes         String?
   payments      Payment[]
+  stop          DeliveryStop?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -94,6 +95,7 @@ model DeliveryBatch {
   zone        Zone
   status      BatchStatus @default(AGGREGATING)
   orders      Order[]
+  stops       DeliveryStop[]
   driver      Driver?     @relation(fields: [driverId], references: [id])
   driverId    String?
   route       Json?
@@ -116,6 +118,7 @@ model Driver {
   plateNo   String
   isActive  Boolean         @default(true)
   batches   DeliveryBatch[]
+  locations DriverLocation[]
   createdAt DateTime        @default(now())
 }
 
@@ -243,6 +246,64 @@ enum OutboxStatus {
   PENDING
   PROCESSED
   FAILED
+}
+
+enum StopStatus {
+  PENDING
+  ARRIVED
+  DELIVERED
+  FAILED
+}
+
+/// One delivery stop per order within a batch, ordered by `sequence` from the
+/// route optimizer. Drives the driver app's turn-by-turn list.
+model DeliveryStop {
+  id          String           @id @default(cuid())
+  batch       DeliveryBatch    @relation(fields: [batchId], references: [id])
+  batchId     String
+  order       Order            @relation(fields: [orderId], references: [id])
+  orderId     String           @unique
+  shopId      String
+  sequence    Int
+  status      StopStatus       @default(PENDING)
+  lat         Float?
+  lng         Float?
+  arrivedAt   DateTime?
+  deliveredAt DateTime?
+  proof       ProofOfDelivery?
+  createdAt   DateTime         @default(now())
+
+  @@index([batchId])
+}
+
+/// Proof of delivery captured by the driver at a stop: photo, recipient OTP,
+/// GPS, optional note.
+model ProofOfDelivery {
+  id            String       @id @default(cuid())
+  stop          DeliveryStop @relation(fields: [stopId], references: [id])
+  stopId        String       @unique
+  photoUrl      String?
+  recipientName String?
+  otp           String?
+  otpVerified   Boolean      @default(false)
+  lat           Float?
+  lng           Float?
+  note          String?
+  createdAt     DateTime     @default(now())
+}
+
+/// Driver GPS snapshots for live tracking + ETA. Append-only, time-indexed.
+model DriverLocation {
+  id         String   @id @default(cuid())
+  driver     Driver   @relation(fields: [driverId], references: [id])
+  driverId   String
+  batchId    String?
+  lat        Float
+  lng        Float
+  recordedAt DateTime @default(now())
+
+  @@index([batchId, recordedAt])
+  @@index([driverId, recordedAt])
 }
 
 /// A single payment attempt against an order, wallet top-up, or loan repayment.

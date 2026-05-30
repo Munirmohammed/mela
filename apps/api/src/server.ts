@@ -27,6 +27,7 @@ async function bootstrap() {
       await import('./jobs/aggregation.job')
       await import('./jobs/notification.job')
       await import('./jobs/payment-retry.job')
+      await import('./jobs/route-optimizer.job')
       const { startOutboxProcessor } = await import('./outbox/outbox.worker')
       startOutboxProcessor()
       await setupScheduler()

@@ -4,7 +4,8 @@ import { prisma } from '../../prisma/client'
 import { aggregationQueue } from '../../jobs/queues'
 import { AuthRequest } from '../../middleware/auth.middleware'
 import { NextFunction, Response } from 'express'
-import { Zone } from '@prisma/client'
+import { Zone, BatchStatus } from '@prisma/client'
+import { deliveryService } from '../delivery/delivery.service'
 
 const router = Router()
 router.use(authenticate, requireAdmin)
@@ -104,6 +105,30 @@ router.post('/drivers', async (req, res: Response, next: NextFunction) => {
       include: { driver: true },
     })
     res.status(201).json({ success: true, data: user.driver })
+  } catch (err) { next(err) }
+})
+
+// Assign a driver to a batch
+router.put('/batches/:id/assign-driver', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const batch = await deliveryService.assignDriver(
+      req.params.id,
+      req.body.driverId,
+      req.user?.id ?? 'admin'
+    )
+    res.json({ success: true, data: batch })
+  } catch (err) { next(err) }
+})
+
+// Transition a batch status (e.g. AGGREGATING -> PURCHASING)
+router.put('/batches/:id/status', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const batch = await deliveryService.setStatus(
+      req.params.id,
+      req.body.status as BatchStatus,
+      req.user?.id ?? 'admin'
+    )
+    res.json({ success: true, data: batch })
   } catch (err) { next(err) }
 })
 
