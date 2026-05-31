@@ -18,6 +18,7 @@ import type {
   Product,
   RegisterInput,
   Shop,
+  TrackingInfo,
   VerifyOtpInput,
   Zone,
 } from '@mela/types'
@@ -71,6 +72,14 @@ export interface MelaApi {
   shop: {
     me: () => Unwrapped<Shop>
     update: (data: Partial<Shop>) => Unwrapped<Shop>
+  }
+  delivery: {
+    track: (orderId: string) => Unwrapped<TrackingInfo>
+    myBatch: () => Unwrapped<DeliveryBatch | null>
+    startBatch: (batchId: string) => Unwrapped<DeliveryBatch>
+    arrive: (stopId: string) => Unwrapped<unknown>
+    deliver: (stopId: string, pod: Record<string, unknown>) => Unwrapped<unknown>
+    pushLocation: (batchId: string, lat: number, lng: number) => Unwrapped<unknown>
   }
   admin: {
     analytics: () => Unwrapped<Record<string, number>>
@@ -147,6 +156,15 @@ export function createMelaApi(config: MelaApiConfig): MelaApi {
     shop: {
       me: () => unwrap(http.get('/shops/me')),
       update: (data) => unwrap(http.put('/shops/me', data)),
+    },
+    delivery: {
+      track: (orderId) => unwrap(http.get(`/delivery/track/${orderId}`)),
+      myBatch: () => unwrap(http.get('/delivery/batch')),
+      startBatch: (batchId) => unwrap(http.post(`/delivery/batches/${batchId}/start`)),
+      arrive: (stopId) => unwrap(http.post(`/delivery/stops/${stopId}/arrive`)),
+      deliver: (stopId, pod) => unwrap(http.post(`/delivery/stops/${stopId}/deliver`, pod)),
+      pushLocation: (batchId, lat, lng) =>
+        unwrap(http.post('/delivery/location', { batchId, lat, lng })),
     },
     admin: {
       analytics: () => unwrap(http.get('/admin/analytics')),

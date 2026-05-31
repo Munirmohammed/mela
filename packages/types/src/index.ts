@@ -178,6 +178,28 @@ export interface CreditScore {
   loans: Loan[]
 }
 
+export interface DriverLocationDTO {
+  lat: number
+  lng: number
+  recordedAt: ISODateString
+}
+
+export interface TrackingInfo {
+  orderStatus: OrderStatus
+  batchId: string | null
+  batchStatus: BatchStatus | null
+  stop: {
+    id: string
+    sequence: number
+    status: string
+    lat?: number | null
+    lng?: number | null
+  } | null
+  driver: { name: string; vehicle: string; plateNo: string } | null
+  driverLocation: DriverLocationDTO | null
+  etaMinutes: number | null
+}
+
 // ---------------------------------------------------------------------------
 // Request payloads
 // ---------------------------------------------------------------------------
