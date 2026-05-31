@@ -1,6 +1,7 @@
 import { Worker, Job } from 'bullmq'
 import { redis } from '../redis/client'
 import { smsService } from '../utils/sms.service'
+import { pushService } from '../utils/push.service'
 import { prisma } from '../prisma/client'
 import { logger } from '../utils/logger'
 
@@ -75,6 +76,7 @@ export const notificationWorker = new Worker(
               message: `We received ${data.amount} ETB for your order.`,
             },
           })
+          await pushService.sendToShop(shop.id, 'Payment received', `${data.amount} ETB received. Thank you!`)
         }
         break
       }
@@ -91,6 +93,7 @@ export const notificationWorker = new Worker(
               message: `${data.amount} ETB added to your wallet.`,
             },
           })
+          await pushService.sendToShop(shop.id, 'Wallet topped up', `${data.amount} ETB added to your wallet.`)
         }
         break
       }

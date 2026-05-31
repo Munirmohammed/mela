@@ -9,6 +9,7 @@ export async function resetDb(): Promise<void> {
     `TRUNCATE TABLE
       "WalletTransaction","Wallet","ProofOfDelivery","DeliveryStop","DriverLocation",
       "OutboxEvent","Payment","OrderItem","Order","DeliveryBatch","Loan","Notification",
+      "PointsLedger","LoyaltyAccount","DeviceToken",
       "Driver","Shop","User","OtpCode","AuditLog","Product"
      RESTART IDENTITY CASCADE`
   )

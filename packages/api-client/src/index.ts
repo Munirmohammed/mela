@@ -13,6 +13,7 @@ import type {
   CreditScore,
   DeliveryBatch,
   Loan,
+  LoyaltyAccount,
   Order,
   PlaceOrderInput,
   PaymentInitResult,
@@ -80,6 +81,12 @@ export interface MelaApi {
       body: { purpose?: 'ORDER' | 'WALLET_TOPUP'; method?: 'CHAPA' | 'WALLET'; orderId?: string; amount?: number },
       idempotencyKey: string
     ) => Unwrapped<PaymentInitResult>
+  }
+  devices: {
+    register: (token: string, platform?: string) => Unwrapped<{ id: string }>
+  }
+  loyalty: {
+    get: () => Unwrapped<LoyaltyAccount>
   }
   shop: {
     me: () => Unwrapped<Shop>
@@ -174,6 +181,12 @@ export function createMelaApi(config: MelaApiConfig): MelaApi {
         ),
       initiate: (body, idempotencyKey) =>
         unwrap(http.post('/payments/initiate', body, { headers: { 'Idempotency-Key': idempotencyKey } })),
+    },
+    devices: {
+      register: (token, platform) => unwrap(http.post('/devices', { token, platform })),
+    },
+    loyalty: {
+      get: () => unwrap(http.get('/loyalty')),
     },
     shop: {
       me: () => unwrap(http.get('/shops/me')),

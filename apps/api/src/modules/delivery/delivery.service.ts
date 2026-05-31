@@ -8,6 +8,7 @@ import { routeOptimizer, MERKATO } from './route.service'
 import { emitToOrder, emitToBatch } from '../../realtime/socket'
 import { etaMinutes } from '../../utils/geo'
 import { canTransition, assertTransition } from './batch-state'
+import { loyaltyService } from '../loyalty/loyalty.service'
 
 async function requireDriver(userId: string) {
   const driver = await prisma.driver.findUnique({ where: { userId } })
@@ -241,7 +242,11 @@ export const deliveryService = {
 
     // Side effects after commit.
     await notificationQueue.add('delivered', { phone: stop.order.shop.phone })
-    await creditQueue.add('recalc', { shopId: stop.shopId }) // worker lands in wave 1C
+    await creditQueue.add('recalc', { shopId: stop.shopId })
+    // Mela Points: 1 point per 100 ETB delivered.
+    await loyaltyService
+      .award(stop.shopId, Math.floor(stop.order.totalAmount / 100), 'Order delivered')
+      .catch(() => undefined)
     emitToOrder(stop.orderId, 'order-delivered', { stopId, orderId: stop.orderId })
     if (batchCompleted) emitToBatch(stop.batchId, 'batch-delivered', { batchId: stop.batchId })
 

@@ -15,6 +15,7 @@ model User {
   refreshToken String?
   shop         Shop?
   driver       Driver?
+  devices      DeviceToken[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -38,6 +39,7 @@ model Shop {
   notifications Notification[]
   payments      Payment[]
   wallet        Wallet?
+  loyalty       LoyaltyAccount?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -317,6 +319,42 @@ model DriverLocation {
 
   @@index([batchId, recordedAt])
   @@index([driverId, recordedAt])
+}
+
+/// Expo push token per user device. Used by the notification worker to send
+/// push alongside SMS.
+model DeviceToken {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Mela Points loyalty account per shop.
+model LoyaltyAccount {
+  id        String         @id @default(cuid())
+  shop      Shop           @relation(fields: [shopId], references: [id])
+  shopId    String         @unique
+  points    Int            @default(0)
+  tier      String         @default("BRONZE")
+  ledger    PointsLedger[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model PointsLedger {
+  id        String         @id @default(cuid())
+  account   LoyaltyAccount @relation(fields: [accountId], references: [id])
+  accountId String
+  points    Int
+  reason    String
+  createdAt DateTime       @default(now())
+
+  @@index([accountId])
 }
 
 /// A single payment attempt against an order, wallet top-up, or loan repayment.

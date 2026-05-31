@@ -23,6 +23,8 @@ import paymentsRoutes from './modules/payments/payments.routes'
 import deliveryRoutes from './modules/delivery/delivery.routes'
 import shopsRoutes from './modules/shops/shops.routes'
 import uploadsRoutes from './modules/uploads/uploads.routes'
+import devicesRoutes from './modules/devices/devices.routes'
+import loyaltyRoutes from './modules/loyalty/loyalty.routes'
 
 const app = express()
 const httpServer = createServer(app)
@@ -75,6 +77,8 @@ app.use('/api/v1/payments', paymentsRoutes)
 app.use('/api/v1/delivery', deliveryRoutes)
 app.use('/api/v1/shops', shopsRoutes)
 app.use('/api/v1/uploads', uploadsRoutes)
+app.use('/api/v1/devices', devicesRoutes)
+app.use('/api/v1/loyalty', loyaltyRoutes)
 
 // 404
 app.use((_req, res) => {

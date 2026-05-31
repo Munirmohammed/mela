@@ -219,6 +219,21 @@ export interface TrackingInfo {
   etaMinutes: number | null
 }
 
+export interface PointsLedgerEntry {
+  id: string
+  points: number
+  reason: string
+  createdAt: ISODateString
+}
+
+export interface LoyaltyAccount {
+  id: string
+  shopId: string
+  points: number
+  tier: string
+  ledger?: PointsLedgerEntry[]
+}
+
 // ---------------------------------------------------------------------------
 // Request payloads
 // ---------------------------------------------------------------------------
