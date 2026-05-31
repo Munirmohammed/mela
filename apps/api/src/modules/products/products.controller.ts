@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { productsService, createProductSchema, updateProductSchema } from './products.service'
+import { storage } from '../uploads/storage.service'
+import { AppError } from '../../utils/AppError'
 
 export const productsController = {
   async list(req: Request, res: Response, next: NextFunction) {
@@ -36,6 +38,16 @@ export const productsController = {
   async toggleAvailability(req: Request, res: Response, next: NextFunction) {
     try {
       const product = await productsService.toggleAvailability(req.params.id)
+      res.json({ success: true, data: product })
+    } catch (err) { next(err) }
+  },
+
+  async setImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const file = (req as Request & { file?: Express.Multer.File }).file
+      if (!file) throw new AppError('No image uploaded (form field "file")', 400)
+      const { url } = await storage.upload(file.buffer, { folder: 'products' })
+      const product = await productsService.update(req.params.id, { imageUrl: url })
       res.json({ success: true, data: product })
     } catch (err) { next(err) }
   },

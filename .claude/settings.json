@@ -8,7 +8,9 @@
       "PowerShell($env:RUN_WORKERS_IN_API='false'; $p = Start-Process -FilePath node -ArgumentList 'dist/server.js' -WorkingDirectory 'apps/api' -RedirectStandardOutput 'C:\\\\WINDOWS\\\\TEMP\\\\mela_api_boot.out' -RedirectStandardError 'C:\\\\WINDOWS\\\\TEMP\\\\mela_api_boot.err' -PassThru -NoNewWindow; Start-Sleep -Seconds 6; if\\(-not $p.HasExited\\){ Stop-Process -Id $p.Id -Force }; Write-Output \"=== STDOUT ===\"; Get-Content 'C:\\\\WINDOWS\\\\TEMP\\\\mela_api_boot.out' -ErrorAction SilentlyContinue; Write-Output \"=== STDERR ===\"; Get-Content 'C:\\\\WINDOWS\\\\TEMP\\\\mela_api_boot.err' -ErrorAction SilentlyContinue | Select-Object -First 15)",
       "Bash(rm -f -- \"memory/... wait\")",
       "Bash(rmdir memory *)",
-      "Bash(ls -d memory)"
+      "Bash(ls -d memory)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

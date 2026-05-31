@@ -17,6 +17,8 @@ import creditRoutes from './modules/credit/credit.routes'
 import adminRoutes from './modules/admin/admin.routes'
 import paymentsRoutes from './modules/payments/payments.routes'
 import deliveryRoutes from './modules/delivery/delivery.routes'
+import shopsRoutes from './modules/shops/shops.routes'
+import uploadsRoutes from './modules/uploads/uploads.routes'
 
 const app = express()
 const httpServer = createServer(app)
@@ -60,6 +62,8 @@ app.use('/api/v1/credit', creditRoutes)
 app.use('/api/v1/admin', adminRoutes)
 app.use('/api/v1/payments', paymentsRoutes)
 app.use('/api/v1/delivery', deliveryRoutes)
+app.use('/api/v1/shops', shopsRoutes)
+app.use('/api/v1/uploads', uploadsRoutes)
 
 // 404
 app.use((_req, res) => {

@@ -13,6 +13,7 @@ import './jobs/aggregation.job'
 import './jobs/notification.job'
 import './jobs/payment-retry.job'
 import './jobs/route-optimizer.job'
+import './jobs/credit-recalc.job'
 import { startOutboxProcessor } from './outbox/outbox.worker'
 
 /**
