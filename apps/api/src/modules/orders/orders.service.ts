@@ -79,7 +79,7 @@ export const ordersService = {
     return order
   },
 
-  async getMyOrders(userId: string) {
+  async getMyOrders(userId: string, page?: { skip: number; take: number }) {
     const shop = await prisma.shop.findUnique({ where: { userId } })
     if (!shop) throw new NotFoundError('Shop')
 
@@ -90,6 +90,8 @@ export const ordersService = {
         batch: { select: { status: true, scheduledAt: true, driverId: true } },
       },
       orderBy: { createdAt: 'desc' },
+      skip: page?.skip ?? 0,
+      take: page?.take ?? 50,
     })
   },
 

@@ -9,6 +9,10 @@ import { env } from './config/env'
 import { logger } from './utils/logger'
 import { errorMiddleware } from './middleware/error.middleware'
 import { initRealtime } from './realtime/socket'
+import { metricsMiddleware } from './observability/metrics'
+import healthRoutes from './observability/health'
+import swaggerUi from 'swagger-ui-express'
+import { openapiSpec } from './docs/openapi'
 
 import authRoutes from './modules/auth/auth.routes'
 import productsRoutes from './modules/products/products.routes'
@@ -49,10 +53,17 @@ app.use(morgan(':method :url HTTP/:http-version :status :res[content-length]', {
   stream: { write: (msg) => logger.http(msg.trim()) },
 }))
 
-// Health check
+// Request metrics
+app.use(metricsMiddleware)
+
+// Health, readiness & Prometheus metrics (+ legacy /health alias)
+app.use(healthRoutes)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'mela-api', timestamp: new Date().toISOString() })
 })
+
+// API documentation
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec as object))
 
 // Routes
 app.use('/api/v1/auth', authRoutes)

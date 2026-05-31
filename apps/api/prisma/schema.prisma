@@ -40,6 +40,9 @@ model Shop {
   wallet        Wallet?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([zone])
+  @@index([isVerified])
 }
 
 model Product {
@@ -78,6 +81,12 @@ model Order {
   stop          DeliveryStop?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([shopId])
+  @@index([status])
+  @@index([batchId])
+  @@index([scheduledFor])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -132,6 +141,8 @@ model Loan {
   dueDate   DateTime
   repaidAt  DateTime?
   createdAt DateTime   @default(now())
+
+  @@index([shopId])
 }
 
 model Notification {
@@ -143,6 +154,8 @@ model Notification {
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([shopId])
 }
 
 model AuditLog {

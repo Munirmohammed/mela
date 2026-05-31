@@ -2,6 +2,7 @@ import { Response, NextFunction } from 'express'
 import { ordersService } from './orders.service'
 import { placeOrderSchema } from './orders.schema'
 import { AuthRequest } from '../../middleware/auth.middleware'
+import { parsePage } from '../../utils/pagination'
 
 export const ordersController = {
   async place(req: AuthRequest, res: Response, next: NextFunction) {
@@ -14,7 +15,8 @@ export const ordersController = {
 
   async list(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const orders = await ordersService.getMyOrders(req.user!.id)
+      const page = parsePage(req.query, { pageSize: 50 })
+      const orders = await ordersService.getMyOrders(req.user!.id, page)
       res.json({ success: true, data: orders })
     } catch (err) { next(err) }
   },

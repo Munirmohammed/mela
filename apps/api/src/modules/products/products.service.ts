@@ -37,6 +37,7 @@ export const productsService = {
           }),
         },
         orderBy: { category: 'asc' },
+        take: 500,
       })
     )
   },

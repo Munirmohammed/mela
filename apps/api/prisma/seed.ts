@@ -107,6 +107,42 @@ async function main() {
   })
   console.log(`✅ Test driver: ${driverUser.phone}`)
 
+  // Give the test shop a funded wallet for demoing wallet payments.
+  const abebeShop = await prisma.shop.findUnique({ where: { userId: shopUser.id } })
+  if (abebeShop) {
+    await prisma.wallet.upsert({
+      where: { shopId: abebeShop.id },
+      update: {},
+      create: { shopId: abebeShop.id, balance: 1000 },
+    })
+    console.log('✅ Test shop wallet funded: 1000 ETB')
+  }
+
+  // A second shop in another zone for multi-zone demos.
+  await prisma.user.upsert({
+    where: { phone: '+251933333333' },
+    update: {},
+    create: {
+      phone: '+251933333333',
+      role: 'SHOP_OWNER',
+      shop: {
+        create: {
+          ownerName: 'Almaz Tesfaye',
+          shopName: 'Almaz Suk',
+          phone: '+251933333333',
+          zone: Zone.KIRKOS,
+          address: 'Kirkos, near Meskel Square',
+          lat: 9.0102,
+          lng: 38.7612,
+          isVerified: true,
+          creditScore: 48,
+          creditLimit: 0,
+        },
+      },
+    },
+  })
+  console.log('✅ Second test shop owner: +251933333333')
+
   console.log('🎉 Seed complete!')
 }
 

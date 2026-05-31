@@ -70,11 +70,15 @@ router.get('/orders', async (req, res: Response, next: NextFunction) => {
 })
 
 // All shops
-router.get('/shops', async (_req, res: Response, next: NextFunction) => {
+router.get('/shops', async (req, res: Response, next: NextFunction) => {
   try {
+    const take = 50
+    const skip = (Number(req.query.page ?? '1') - 1) * take
     const shops = await prisma.shop.findMany({
       include: { _count: { select: { orders: true } } },
       orderBy: { createdAt: 'desc' },
+      take,
+      skip,
     })
     res.json({ success: true, data: shops })
   } catch (err) { next(err) }
