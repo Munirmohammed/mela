@@ -15,11 +15,14 @@ import type {
   Loan,
   Order,
   PlaceOrderInput,
+  PaymentInitResult,
   Product,
   RegisterInput,
   Shop,
   TrackingInfo,
   VerifyOtpInput,
+  WalletBalance,
+  WalletLedgerEntry,
   Zone,
 } from '@mela/types'
 
@@ -68,6 +71,15 @@ export interface MelaApi {
     getScore: () => Unwrapped<CreditScore>
     applyLoan: (amount: number) => Unwrapped<Loan>
     repayLoan: (loanId: string) => Unwrapped<Loan>
+  }
+  payments: {
+    wallet: () => Unwrapped<WalletBalance>
+    walletTransactions: () => Unwrapped<WalletLedgerEntry[]>
+    topUp: (amount: number, idempotencyKey: string) => Unwrapped<PaymentInitResult>
+    initiate: (
+      body: { purpose?: 'ORDER' | 'WALLET_TOPUP'; method?: 'CHAPA' | 'WALLET'; orderId?: string; amount?: number },
+      idempotencyKey: string
+    ) => Unwrapped<PaymentInitResult>
   }
   shop: {
     me: () => Unwrapped<Shop>
@@ -152,6 +164,16 @@ export function createMelaApi(config: MelaApiConfig): MelaApi {
       getScore: () => unwrap(http.get('/credit/score')),
       applyLoan: (amount) => unwrap(http.post('/credit/apply', { amount })),
       repayLoan: (loanId) => unwrap(http.post(`/credit/repay/${loanId}`)),
+    },
+    payments: {
+      wallet: () => unwrap(http.get('/payments/wallet')),
+      walletTransactions: () => unwrap(http.get('/payments/wallet/transactions')),
+      topUp: (amount, idempotencyKey) =>
+        unwrap(
+          http.post('/payments/wallet/topup', { amount }, { headers: { 'Idempotency-Key': idempotencyKey } })
+        ),
+      initiate: (body, idempotencyKey) =>
+        unwrap(http.post('/payments/initiate', body, { headers: { 'Idempotency-Key': idempotencyKey } })),
     },
     shop: {
       me: () => unwrap(http.get('/shops/me')),

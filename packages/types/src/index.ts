@@ -172,10 +172,29 @@ export interface Loan {
 }
 
 export interface CreditScore {
-  creditScore: number
-  creditLimit: number
+  score: number
+  limit: number
   availableCredit: number
   loans: Loan[]
+}
+
+export interface WalletBalance {
+  balance: number
+  currency: string
+}
+
+export interface WalletLedgerEntry {
+  id: string
+  type: 'CREDIT' | 'DEBIT'
+  amount: number
+  balanceAfter: number
+  reason: string
+  createdAt: ISODateString
+}
+
+export interface PaymentInitResult {
+  payment: { id: string; status: string; amount: number }
+  checkoutUrl: string | null
 }
 
 export interface DriverLocationDTO {
